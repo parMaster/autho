@@ -33,17 +33,18 @@ const (
 
 // Signin - signs in a user with a given login and password
 func (s *AuthService) Signin(login, password string) (string, error) {
-	if user, ok := s.Users[login]; ok {
-		if user.Password == password {
-			t, err := s.Tokens.New(login)
-			if err != nil {
-				return "", err
-			}
-			return t.Token, nil
-		}
+	user, ok := s.Users[login]
+	if !ok {
+		return "", errors.New(ErrUserNotFound)
+	}
+	if user.Password != password {
 		return "", fmt.Errorf("%s: %s", ErrWrongPassword, password)
 	}
-	return "", errors.New(ErrUserNotFound)
+	t, err := s.Tokens.New(login)
+	if err != nil {
+		return "", err
+	}
+	return t.Token, nil
 }
 
 // Signup - signs up a user with a given login and password

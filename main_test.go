@@ -40,6 +40,7 @@ func TestSignupSignin(t *testing.T) {
 	result, err := service.Check(token)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
+	assert.Equal(t, "login", result)
 
 	token, err = service.Signin("wrong login", "password")
 	assert.Error(t, err)
