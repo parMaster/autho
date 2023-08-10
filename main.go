@@ -17,13 +17,13 @@ type TokenProviderInterface interface {
 }
 
 type AuthService struct {
-	tokens TokenProviderInterface
+	Tokens TokenProviderInterface
 	Users  map[string]User
 }
 
 func NewAuthService(tp TokenProviderInterface) *AuthService {
 	u := make(map[string]User, 0)
-	return &AuthService{Users: u}
+	return &AuthService{Users: u, Tokens: tp}
 }
 
 const (
@@ -35,7 +35,11 @@ const (
 func (s *AuthService) Signin(login, password string) (string, error) {
 	if user, ok := s.Users[login]; ok {
 		if user.Password == password {
-			return "token", nil
+			t, err := s.Tokens.New(login)
+			if err != nil {
+				return "", err
+			}
+			return t.Token, nil
 		}
 		return "", fmt.Errorf("%s: %s", ErrWrongPassword, password)
 	}
@@ -51,7 +55,7 @@ func (s *AuthService) Signup(login, password string) (string, error) {
 // Check - checks validity of a token
 func (s *AuthService) Check(token string) (string, error) {
 
-	claims, err := s.tokens.Validate(token)
+	claims, err := s.Tokens.Validate(token)
 	if err != nil {
 		return "", err
 	}
@@ -59,4 +63,6 @@ func (s *AuthService) Check(token string) (string, error) {
 	if user, ok := s.Users[claims.Username]; ok {
 		return user.Login, nil
 	}
+
+	return "", errors.New(ErrUserNotFound)
 }

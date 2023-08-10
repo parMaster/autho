@@ -10,7 +10,7 @@ import (
 
 func Test_New_Validate_Expire(t *testing.T) {
 
-	tp := NewTokenProvider(3 * time.Second)
+	tp := NewJwtProvider(3 * time.Second)
 	token, err := tp.New("username")
 
 	assert.NoError(t, err)
@@ -29,7 +29,7 @@ func Test_New_Validate_Expire(t *testing.T) {
 
 func Test_Refresh(t *testing.T) {
 
-	tp := NewTokenProvider(3 * time.Second)
+	tp := NewJwtProvider(3 * time.Second)
 	token, err := tp.New("username")
 
 	assert.NoError(t, err)

@@ -19,18 +19,18 @@ type Token struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-type TokenProvider struct {
+type JwtProvider struct {
 	ExpirationTime time.Duration
 }
 
-func NewTokenProvider(exp time.Duration) TokenProviderInterface {
-	return &TokenProvider{
+func NewJwtProvider(exp time.Duration) TokenProviderInterface {
+	return &JwtProvider{
 		ExpirationTime: exp,
 	}
 }
 
 // New() creates a new token for a given username
-func (t *TokenProvider) New(username string) (*Token, error) {
+func (t *JwtProvider) New(username string) (*Token, error) {
 	expirationTime := time.Now().Add(t.ExpirationTime)
 	claims := &Claims{
 		Username: username,
@@ -67,7 +67,7 @@ func checkToken(token string, claims *Claims) (bool, error) {
 }
 
 // Validate() validates a given token
-func (t *TokenProvider) Validate(token string) (*Claims, error) {
+func (t *JwtProvider) Validate(token string) (*Claims, error) {
 	claims := &Claims{}
 
 	valid, err := checkToken(token, claims)
@@ -82,7 +82,7 @@ func (t *TokenProvider) Validate(token string) (*Claims, error) {
 }
 
 // Refresh() refreshes a given token - validate it and create a new one if it's valid
-func (t *TokenProvider) Refresh(token string) (*Token, error) {
+func (t *JwtProvider) Refresh(token string) (*Token, error) {
 	claims, err := t.Validate(token)
 	if err == nil {
 		return t.New(claims.Username)
