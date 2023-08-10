@@ -87,10 +87,9 @@ func (t *TokenProvider) Validate(token string) (*Claims, error) {
 
 // Refresh() refreshes a given token - validate it and create a new one if it's valid
 func (t *TokenProvider) Refresh(token string) (*Token, error) {
-
-	if claims, err := t.Validate(token); err == nil {
+	claims, err := t.Validate(token)
+	if err == nil {
 		return t.New(claims.Username)
 	}
-
-	return nil, nil
+	return nil, err
 }
