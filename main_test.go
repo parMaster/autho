@@ -3,26 +3,33 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSignup(t *testing.T) {
-	service := NewAuthService()
+	tp := NewTokenProvider(3 * time.Second)
+	service := NewAuthService(tp)
+
 	token, err := service.Signup("login", "password")
 	assert.NoError(t, err)
 	assert.Empty(t, token)
 }
 
 func TestSignin(t *testing.T) {
-	service := NewAuthService()
+	tp := NewTokenProvider(3 * time.Second)
+	service := NewAuthService(tp)
+
 	token, err := service.Signin("login", "password")
 	assert.Error(t, err)
 	assert.Empty(t, token)
 }
 
 func TestSignupSignin(t *testing.T) {
-	service := NewAuthService()
+	tp := NewTokenProvider(3 * time.Second)
+	service := NewAuthService(tp)
+
 	_, err := service.Signup("login", "password")
 	assert.NoError(t, err)
 

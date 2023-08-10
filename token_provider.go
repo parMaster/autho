@@ -19,15 +19,11 @@ type Token struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-type TokenProviderInterface interface {
-	New(username string) (*Token, error)
-}
-
 type TokenProvider struct {
 	ExpirationTime time.Duration
 }
 
-func NewTokenProvider(exp time.Duration) *TokenProvider {
+func NewTokenProvider(exp time.Duration) TokenProviderInterface {
 	return &TokenProvider{
 		ExpirationTime: exp,
 	}
