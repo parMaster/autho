@@ -1,17 +1,12 @@
 package main
 
 import (
-	"context"
+	"crypto/rand"
 	"errors"
 	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
+	"golang.org/x/crypto/argon2"
 )
 
 type User struct {
@@ -19,9 +14,18 @@ type User struct {
 	Password string
 }
 
+type Token struct {
+	Username  string    `json:"username"`
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
 type TokenProviderInterface interface {
+	// New() creates a new token for a given username
 	New(username string) (*Token, error)
-	Validate(token string) (*Claims, error)
+	// Validate() validates a given token and returns a username
+	Validate(token string) (*Token, error)
+	// Refresh() refreshes a given token and returns a new one
 	Refresh(token string) (*Token, error)
 }
 
@@ -46,7 +50,10 @@ func (s *AuthService) Signin(login, password string) (string, error) {
 	if !ok {
 		return "", errors.New(ErrUserNotFound)
 	}
-	if user.Password != password {
+
+	salt := user.Password[:16]
+
+	if user.Password != s.Hash(salt, password) {
 		return "", fmt.Errorf("%s: %s", ErrWrongPassword, password)
 	}
 	t, err := s.Tokens.New(login)
@@ -58,64 +65,30 @@ func (s *AuthService) Signin(login, password string) (string, error) {
 
 // Signup - signs up a user with a given login and password
 func (s *AuthService) Signup(login, password string) (string, error) {
-	s.Users[login] = User{Login: login, Password: password}
+	salt := make([]byte, 16)
+	rand.Read(salt)
+
+	s.Users[login] = User{Login: login, Password: s.Hash(string(salt), password)}
 	return "", nil
 }
 
 // Check - checks validity of a token
 func (s *AuthService) Check(token string) (string, error) {
 
-	claims, err := s.Tokens.Validate(token)
+	validated, err := s.Tokens.Validate(token)
 	if err != nil {
 		return "", err
 	}
 
-	if user, ok := s.Users[claims.Username]; ok {
+	if user, ok := s.Users[validated.Username]; ok {
 		return user.Login, nil
 	}
 
 	return "", errors.New(ErrUserNotFound)
 }
 
-func main() {
-	tp := NewJwtProvider(5 * time.Minute)
-	service := NewAuthService(tp)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		if x := recover(); x != nil {
-			log.Printf("[WARN] run time panic:\n%v", x)
-			panic(x)
-		}
-
-		// catch signal and invoke graceful termination
-		stop := make(chan os.Signal, 1)
-		signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-		<-stop
-		log.Printf("[INFO] shutting down")
-		cancel()
-	}()
-
-	router := chi.NewRouter()
-	router.Mount("/auth", service.Handlers("/auth"))
-
-	httpServer := &http.Server{
-		Addr:              ":8000",
-		Handler:           router,
-		ReadHeaderTimeout: time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       time.Second,
-	}
-	log.Printf("[INFO] Listening: %s", "8000")
-
-	go func() {
-		<-ctx.Done()
-		if httpServer != nil {
-			if err := httpServer.Shutdown(ctx); err != nil {
-				log.Printf("[ERROR] failed to close http server, %v", err)
-			}
-		}
-	}()
-
-	httpServer.ListenAndServe()
+// Hash - hashes a password
+func (s *AuthService) Hash(salt string, password string) string {
+	key := argon2.IDKey([]byte(password), []byte(salt), 1, 64*1024, 4, 32)
+	return string(salt) + string(key)
 }

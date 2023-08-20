@@ -74,10 +74,10 @@ func (s *AuthService) HandleCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims, err := s.Tokens.Validate(c.Value)
+	validated, err := s.Tokens.Validate(c.Value)
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "OK", "login": login, "ExpiresAt": claims.RegisteredClaims.ExpiresAt.Format(time.RFC3339)})
+	json.NewEncoder(w).Encode(map[string]string{"status": "OK", "login": login, "ExpiresAt": validated.ExpiresAt.Format(time.RFC3339)})
 
 	return
 }
