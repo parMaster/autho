@@ -87,6 +87,7 @@ func (s *AuthService) Logout(w http.ResponseWriter, r *http.Request) {
 	// immediately clear the token cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:    "token",
+		Value:   "",
 		Expires: time.Now(),
 	})
 }

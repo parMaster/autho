@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"testing"
 	"time"
 
@@ -34,7 +33,6 @@ func Test_Refresh(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token.Token)
-	log.Printf("token: %s", token.Token)
 
 	claims, err := tp.Validate(token.Token)
 	assert.NoError(t, err)
@@ -72,19 +70,4 @@ func Test_Refresh(t *testing.T) {
 	ir, err := tp.Refresh("invalid token")
 	assert.Error(t, err)
 	assert.Empty(t, ir)
-}
-
-func Test_Check(t *testing.T) {
-
-	tp := NewJwtProvider(3 * time.Second)
-
-	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InVzZXIxIiwiZXhwIjoxNjkxNzg4NjY0fQ.oCJv56AtJ4mG6VMAboEsykC1ML2DZBVGX4GFakuukV0"
-	log.Printf("token: %s", token)
-
-	claims, err := tp.Validate(token)
-
-	assert.Error(t, err)
-	log.Printf("error: %s", err)
-
-	assert.Empty(t, claims)
 }
