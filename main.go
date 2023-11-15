@@ -15,7 +15,7 @@ type User struct {
 }
 
 type Token struct {
-	Username  string    `json:"username"`
+	Login     string    `json:"login"`
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
@@ -25,7 +25,7 @@ type TokenProviderInterface interface {
 	New(username string) (*Token, error)
 	// Validate() validates a given token and returns a username
 	Validate(token string) (*Token, error)
-	// Refresh() refreshes a given token and returns a new one
+	// Refresh() returns a new token with a new expiration time
 	Refresh(token string) (*Token, error)
 }
 
@@ -80,7 +80,7 @@ func (s *AuthService) Check(token string) (string, error) {
 		return "", err
 	}
 
-	if user, ok := s.Users[validated.Username]; ok {
+	if user, ok := s.Users[validated.Login]; ok {
 		return user.Login, nil
 	}
 

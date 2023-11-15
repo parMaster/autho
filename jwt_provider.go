@@ -10,7 +10,7 @@ import (
 var jwtKey = []byte("my_secret_key")
 
 type Claims struct {
-	Username string `json:"username"`
+	Login string `json:"login"`
 	jwt.RegisteredClaims
 }
 
@@ -25,10 +25,10 @@ func NewJwtProvider(exp time.Duration) TokenProviderInterface {
 }
 
 // New() creates a new token for a given username
-func (t *JwtProvider) New(username string) (*Token, error) {
+func (t *JwtProvider) New(login string) (*Token, error) {
 	expirationTime := time.Now().Add(t.ExpirationTime)
 	claims := &Claims{
-		Username: username,
+		Login: login,
 		RegisteredClaims: jwt.RegisteredClaims{
 			// In JWT, the expiry time is expressed as unix milliseconds
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
@@ -45,7 +45,7 @@ func (t *JwtProvider) New(username string) (*Token, error) {
 	return &Token{
 		Token:     tokenString,
 		ExpiresAt: expirationTime,
-		Username:  username,
+		Login:     login,
 	}, nil
 }
 
@@ -66,7 +66,7 @@ func (t *JwtProvider) Validate(token string) (*Token, error) {
 	return &Token{
 		Token:     token,
 		ExpiresAt: claims.ExpiresAt.Time,
-		Username:  claims.Username,
+		Login:     claims.Login,
 	}, nil
 }
 
@@ -74,7 +74,7 @@ func (t *JwtProvider) Validate(token string) (*Token, error) {
 func (t *JwtProvider) Refresh(token string) (*Token, error) {
 	validated, err := t.Validate(token)
 	if err == nil {
-		return t.New(validated.Username)
+		return t.New(validated.Login)
 	}
 	return nil, err
 }

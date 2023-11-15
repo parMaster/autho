@@ -7,11 +7,13 @@ import (
 )
 
 type Credentials struct {
+	Login    string `json:"login"`
 	Password string `json:"password"`
-	Username string `json:"username"`
 }
 
-// HandleSignin - http handler for signin
+// HandleSignin - http handler for /signin endpoint, signs in a user
+// sets a cookie with a json encoded struct with
+// status, token and expiratiom time
 func (s *AuthService) HandleSignin(w http.ResponseWriter, r *http.Request) {
 	var creds Credentials
 	err := json.NewDecoder(r.Body).Decode(&creds)
@@ -20,7 +22,7 @@ func (s *AuthService) HandleSignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expectedUser, ok := s.Users[creds.Username]
+	expectedUser, ok := s.Users[creds.Login]
 
 	// If the username/password combination is wrong, return an error
 	if !ok || expectedUser.Password != creds.Password {
@@ -28,24 +30,24 @@ func (s *AuthService) HandleSignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := s.Tokens.New(creds.Username)
+	token, err := s.Tokens.New(creds.Login)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	http.SetCookie(w, &http.Cookie{
 		Name:    "token",
 		Value:   token.Token,
 		Expires: token.ExpiresAt,
 	})
+	// w.WriteHeader(http.StatusOK)
 
 	json.NewEncoder(w).Encode(map[string]string{"status": "OK", "token": token.Token, "expires_at": token.ExpiresAt.Format(time.RFC3339)})
-	return
 }
 
-// HandleSignup - http handler for signup
+// HandleSignup - http handler for /signup endpoint, creates a new user,
+// sets a cookie with a json encoded struct with status and a username
 func (s *AuthService) HandleSignup(w http.ResponseWriter, r *http.Request) {
 	var creds Credentials
 	err := json.NewDecoder(r.Body).Decode(&creds)
@@ -54,13 +56,13 @@ func (s *AuthService) HandleSignup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.Users[creds.Username] = User{Login: creds.Username, Password: creds.Password}
+	s.Users[creds.Login] = User{Login: creds.Login, Password: creds.Password}
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "OK", "user": creds.Username})
-	return
+	json.NewEncoder(w).Encode(map[string]string{"status": "OK", "login": creds.Login})
 }
 
-// HandleCheck - http handler for check
+// HandleCheck - http handler for /check endpoint, checks if the token is valid,
+// returns a json encoded struct with status, username and expiration time
 func (s *AuthService) HandleCheck(w http.ResponseWriter, r *http.Request) {
 	c, err := r.Cookie("token")
 	if err != nil {
@@ -78,13 +80,10 @@ func (s *AuthService) HandleCheck(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "OK", "login": login, "ExpiresAt": validated.ExpiresAt.Format(time.RFC3339)})
-
-	return
 }
 
-// HandleLogout - http handler for logout
+// HandleLogout - http handler for logout, clears the token cookie
 func (s *AuthService) Logout(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 	// immediately clear the token cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:    "token",
@@ -92,7 +91,13 @@ func (s *AuthService) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Handlers - returns a http.Handler with all the handlers,
+// prefix default is "/auth", the handlers will be available at
+// /auth/signin, /auth/signup, /auth/check, /auth/logout
 func (s *AuthService) Handlers(prefix string) http.Handler {
+	if prefix == "" {
+		prefix = "/auth"
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc(prefix+"/signin", s.HandleSignin)
 	mux.HandleFunc(prefix+"/signup", s.HandleSignup)

@@ -14,7 +14,7 @@ import (
 
 func main() {
 	tp := NewJwtProvider(5 * time.Minute)
-	service := NewAuthService(tp)
+	handlers := NewAuthService(tp).Handlers("/auth")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
@@ -32,7 +32,7 @@ func main() {
 	}()
 
 	router := chi.NewRouter()
-	router.Mount("/auth", service.Handlers("/auth"))
+	router.Mount("/auth", handlers)
 
 	httpServer := &http.Server{
 		Addr:              ":8000",
