@@ -7,8 +7,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("my_secret_key")
-
 type Claims struct {
 	Login string `json:"login"`
 	jwt.RegisteredClaims
@@ -16,12 +14,15 @@ type Claims struct {
 
 type JwtProvider struct {
 	ExpirationTime time.Duration
+	Key            []byte
 }
 
-func NewJwtProvider(exp time.Duration) TokenProviderInterface {
-	return &JwtProvider{
-		ExpirationTime: exp,
+func NewJwtProvider(opts ...JWTProviderOption) TokenProviderInterface {
+	tp := JwtProvider{}
+	for _, opt := range opts {
+		opt(&tp)
 	}
+	return &tp
 }
 
 // New() creates a new token for a given username
@@ -37,7 +38,7 @@ func (t *JwtProvider) New(login string) (*Token, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err := token.SignedString(jwtKey)
+	tokenString, err := token.SignedString(t.Key)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,7 @@ func (t *JwtProvider) Validate(token string) (*Token, error) {
 	claims := &Claims{}
 
 	tkn, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+		return t.Key, nil
 	})
 	if err != nil {
 		return nil, err
@@ -77,4 +78,21 @@ func (t *JwtProvider) Refresh(token string) (*Token, error) {
 		return t.New(validated.Login)
 	}
 	return nil, err
+}
+
+// JWTProviderOption is a function that configures a JwtProvider.
+type JWTProviderOption func(*JwtProvider)
+
+// ExpirationTime sets the expiration time for a token
+func ExpirationTime(exp time.Duration) JWTProviderOption {
+	return func(j *JwtProvider) {
+		j.ExpirationTime = exp
+	}
+}
+
+// Key sets the key for a token
+func Key(key string) JWTProviderOption {
+	return func(j *JwtProvider) {
+		j.Key = []byte(key)
+	}
 }

@@ -13,7 +13,7 @@ import (
 )
 
 func NewServer() (*http.Server, *AuthService) {
-	tp := NewJwtProvider(2 * time.Second)
+	tp := NewJwtProvider(ExpirationTime(2*time.Second), Key("my_secret_key"))
 	authService := NewAuthService(tp)
 	handlers := authService.Handlers("/auth")
 

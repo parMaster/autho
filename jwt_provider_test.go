@@ -9,7 +9,7 @@ import (
 
 func Test_New_Validate_Expire(t *testing.T) {
 
-	tp := NewJwtProvider(1 * time.Second)
+	tp := NewJwtProvider(ExpirationTime(1*time.Second), Key("my_secret_key"))
 	token, err := tp.New("username")
 
 	assert.NoError(t, err, "error creating token")
@@ -28,7 +28,7 @@ func Test_New_Validate_Expire(t *testing.T) {
 func Test_Refresh(t *testing.T) {
 
 	// Making token that expires in 3 seconds
-	tp := NewJwtProvider(3 * time.Second)
+	tp := NewJwtProvider(ExpirationTime(3*time.Second), Key("my_secret_key"))
 	token, err := tp.New("username")
 
 	assert.NoError(t, err)

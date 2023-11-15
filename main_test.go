@@ -9,7 +9,7 @@ import (
 )
 
 func TestSignup(t *testing.T) {
-	tp := NewJwtProvider(3 * time.Second)
+	tp := NewJwtProvider(ExpirationTime(3*time.Second), Key("my_secret_key"))
 	service := NewAuthService(tp)
 
 	token, err := service.Signup("login", "password")
@@ -18,7 +18,7 @@ func TestSignup(t *testing.T) {
 }
 
 func TestSignin(t *testing.T) {
-	tp := NewJwtProvider(3 * time.Second)
+	tp := NewJwtProvider(ExpirationTime(3*time.Second), Key("my_secret_key"))
 	service := NewAuthService(tp)
 
 	token, err := service.Signin("login", "password")
@@ -27,7 +27,7 @@ func TestSignin(t *testing.T) {
 }
 
 func TestSignupSignin(t *testing.T) {
-	tp := NewJwtProvider(3 * time.Second)
+	tp := NewJwtProvider(ExpirationTime(3*time.Second), Key("my_secret_key"))
 	service := NewAuthService(tp)
 
 	_, err := service.Signup("login", "password")
