@@ -10,7 +10,8 @@ import (
 
 func TestSignup(t *testing.T) {
 	tp := NewJwtProvider(ExpirationTime(3*time.Second), Key("my_secret_key"))
-	service := NewAuthService(tp)
+	up := NewUsers()
+	service := NewAuthService(tp, up)
 
 	token, err := service.Signup("login", "password")
 	assert.NoError(t, err)
@@ -19,7 +20,8 @@ func TestSignup(t *testing.T) {
 
 func TestSignin(t *testing.T) {
 	tp := NewJwtProvider(ExpirationTime(3*time.Second), Key("my_secret_key"))
-	service := NewAuthService(tp)
+	up := NewUsers()
+	service := NewAuthService(tp, up)
 
 	token, err := service.Signin("login", "password")
 	assert.Error(t, err)
@@ -28,7 +30,8 @@ func TestSignin(t *testing.T) {
 
 func TestSignupSignin(t *testing.T) {
 	tp := NewJwtProvider(ExpirationTime(3*time.Second), Key("my_secret_key"))
-	service := NewAuthService(tp)
+	up := NewUsers()
+	service := NewAuthService(tp, up)
 
 	_, err := service.Signup("login", "password")
 	assert.NoError(t, err)

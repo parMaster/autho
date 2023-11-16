@@ -22,10 +22,10 @@ func (s *AuthService) HandleSignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expectedUser, ok := s.Users[creds.Login]
+	expectedUser, err := s.Users.Get(creds.Login)
 
 	// If the username/password combination is wrong, return an error
-	if !ok || expectedUser.Password != creds.Password {
+	if err != nil || expectedUser.Password != creds.Password {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -56,7 +56,7 @@ func (s *AuthService) HandleSignup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.Users[creds.Login] = User{Login: creds.Login, Password: creds.Password}
+	s.Users.Create(User(creds))
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "OK", "login": creds.Login})
 }
@@ -77,6 +77,10 @@ func (s *AuthService) HandleCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	validated, err := s.Tokens.Validate(c.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "OK", "login": login, "ExpiresAt": validated.ExpiresAt.Format(time.RFC3339)})

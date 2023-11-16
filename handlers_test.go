@@ -14,7 +14,8 @@ import (
 
 func NewServer() (*http.Server, *AuthService) {
 	tp := NewJwtProvider(ExpirationTime(2*time.Second), Key("my_secret_key"))
-	authService := NewAuthService(tp)
+	up := NewUsers()
+	authService := NewAuthService(tp, up)
 	handlers := authService.Handlers("/auth")
 
 	router := chi.NewRouter()

@@ -14,7 +14,8 @@ import (
 
 func main() {
 	tp := NewJwtProvider(ExpirationTime(5*time.Minute), Key("my_secret_key"))
-	handlers := NewAuthService(tp).Handlers("/auth")
+	up := NewUsers()
+	handlers := NewAuthService(tp, up).Handlers("/auth")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {

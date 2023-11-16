@@ -29,14 +29,20 @@ type TokenProviderInterface interface {
 	Refresh(token string) (*Token, error)
 }
 
-type AuthService struct {
-	Tokens TokenProviderInterface
-	Users  map[string]User
+type UserProvider interface {
+	// Get() returns a user by a given username
+	Get(login string) (*User, error)
+	// Create() creates a new user
+	Create(user User) error
 }
 
-func NewAuthService(tp TokenProviderInterface) *AuthService {
-	u := make(map[string]User, 0)
-	return &AuthService{Users: u, Tokens: tp}
+type AuthService struct {
+	Tokens TokenProviderInterface
+	Users  UserProvider
+}
+
+func NewAuthService(tp TokenProviderInterface, up UserProvider) *AuthService {
+	return &AuthService{Users: up, Tokens: tp}
 }
 
 const (
@@ -46,9 +52,9 @@ const (
 
 // Signin - signs in a user with a given login and password
 func (s *AuthService) Signin(login, password string) (string, error) {
-	user, ok := s.Users[login]
-	if !ok {
-		return "", errors.New(ErrUserNotFound)
+	user, err := s.Users.Get(login)
+	if err != nil {
+		return "", err
 	}
 
 	salt := user.Password[:16]
@@ -68,7 +74,8 @@ func (s *AuthService) Signup(login, password string) (string, error) {
 	salt := make([]byte, 16)
 	rand.Read(salt)
 
-	s.Users[login] = User{Login: login, Password: s.Hash(string(salt), password)}
+	s.Users.Create(User{Login: login, Password: s.Hash(string(salt), password)})
+	// Create(User)
 	return "", nil
 }
 
@@ -80,7 +87,7 @@ func (s *AuthService) Check(token string) (string, error) {
 		return "", err
 	}
 
-	if user, ok := s.Users[validated.Login]; ok {
+	if user, err := s.Users.Get(validated.Login); err == nil {
 		return user.Login, nil
 	}
 
