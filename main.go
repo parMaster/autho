@@ -75,7 +75,6 @@ func (s *AuthService) Signup(login, password string) (string, error) {
 	rand.Read(salt)
 
 	s.Users.Create(User{Login: login, Password: s.Hash(string(salt), password)})
-	// Create(User)
 	return "", nil
 }
 
