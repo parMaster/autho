@@ -50,7 +50,7 @@ const (
 	ErrWrongPassword = "wrong password"
 )
 
-// Signin - signs in a user with a given login and password
+// Signin - signs in a user with a given login and password, returns a token
 func (s *AuthService) Signin(login, password string) (string, error) {
 	user, err := s.Users.Get(login)
 	if err != nil {
@@ -69,7 +69,7 @@ func (s *AuthService) Signin(login, password string) (string, error) {
 	return t.Token, nil
 }
 
-// Signup - signs up a user with a given login and password
+// Signup - creates a user with a given login and password
 func (s *AuthService) Signup(login, password string) (string, error) {
 	salt := make([]byte, 16)
 	rand.Read(salt)
@@ -78,7 +78,7 @@ func (s *AuthService) Signup(login, password string) (string, error) {
 	return "", nil
 }
 
-// Check - checks validity of a token
+// Check - checks validity of a token and if such login exists
 func (s *AuthService) Check(token string) (string, error) {
 
 	validated, err := s.Tokens.Validate(token)
@@ -93,7 +93,7 @@ func (s *AuthService) Check(token string) (string, error) {
 	return "", errors.New(ErrUserNotFound)
 }
 
-// Hash - hashes a password
+// Hash - returns `salt` + `salted-hashed password` string
 func (s *AuthService) Hash(salt string, password string) string {
 	key := argon2.IDKey([]byte(password), []byte(salt), 1, 64*1024, 4, 32)
 	return string(salt) + string(key)
