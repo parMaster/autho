@@ -15,7 +15,8 @@ import (
 func main() {
 	tp := NewJwtProvider(ExpirationTime(5*time.Minute), Key("my_secret_key"))
 	up := NewUsers()
-	handlers := NewAuthService(tp, up).Handlers("/auth")
+	auth := NewAuthService(tp, up)
+	handlers := auth.Handlers("/auth")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
@@ -34,6 +35,10 @@ func main() {
 
 	router := chi.NewRouter()
 	router.Mount("/auth", handlers)
+
+	router.With(auth.Auth).Get("/membersonly", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Members only area, congrats!"))
+	})
 
 	httpServer := &http.Server{
 		Addr:              ":8000",

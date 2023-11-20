@@ -20,7 +20,7 @@ type Token struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-type TokenProviderInterface interface {
+type TokenProvider interface {
 	// New() creates a new token for a given username
 	New(username string) (*Token, error)
 	// Validate() validates a given token and returns a username
@@ -37,11 +37,11 @@ type UserProvider interface {
 }
 
 type AuthService struct {
-	Tokens TokenProviderInterface
+	Tokens TokenProvider
 	Users  UserProvider
 }
 
-func NewAuthService(tp TokenProviderInterface, up UserProvider) *AuthService {
+func NewAuthService(tp TokenProvider, up UserProvider) *AuthService {
 	return &AuthService{Users: up, Tokens: tp}
 }
 

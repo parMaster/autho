@@ -21,3 +21,7 @@ GET http://localhost:8000/auth/check
 
 ### Logout
 GET http://localhost:8000/auth/logout
+
+### Only for authorized users
+GET http://localhost:8000/membersonly
+

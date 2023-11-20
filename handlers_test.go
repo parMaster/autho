@@ -21,6 +21,10 @@ func NewServer() (*http.Server, *AuthService) {
 	router := chi.NewRouter()
 	router.Mount("/auth", handlers)
 
+	router.With(authService.Auth).Get("/membersonly", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Members only area, congrats!"))
+	})
+
 	httpServer := &http.Server{
 		Addr:              ":8001",
 		Handler:           router,
@@ -125,6 +129,12 @@ func TestServerSignupSignin(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, response.Code, "Expected status code %d but got %d", http.StatusUnauthorized, response.Code)
 	assert.Zero(t, response.Body.Len(), "Expected empty response body but got %s", response.Body.String())
 
+	// Check Auth middleware
+	// Check with valid token
+	// req, _ = http.NewRequest("GET", "/membersonly", nil)
+	// req.Header.Set("Cookie", "token="+token)
+	// response = httptest.NewRecorder()
+
 	// Logout test
 	// Logout
 	req, _ = http.NewRequest("GET", "/auth/logout", nil)
@@ -140,4 +150,5 @@ func TestServerSignupSignin(t *testing.T) {
 	assert.Equal(t, 1, len(cookies), "Expected 1 cookie but got %d", len(cookies))
 	assert.Equal(t, "token", cookies[0].Name, "Expected cookie name token but got %s", cookies[0].Name)
 	assert.Equal(t, "", cookies[0].Value, "Expected empty cookie value but got %s", cookies[0].Value)
+
 }

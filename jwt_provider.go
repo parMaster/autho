@@ -17,7 +17,7 @@ type JwtProvider struct {
 	Key            []byte
 }
 
-func NewJwtProvider(opts ...JWTProviderOption) TokenProviderInterface {
+func NewJwtProvider(opts ...JWTProviderOption) TokenProvider {
 	tp := JwtProvider{}
 	for _, opt := range opts {
 		opt(&tp)

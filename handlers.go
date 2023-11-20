@@ -37,6 +37,7 @@ func (s *AuthService) HandleSignin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &http.Cookie{
+		Path:    "/",
 		Name:    "token",
 		Value:   token.Token,
 		Expires: token.ExpiresAt,
@@ -90,6 +91,7 @@ func (s *AuthService) HandleCheck(w http.ResponseWriter, r *http.Request) {
 func (s *AuthService) Logout(w http.ResponseWriter, r *http.Request) {
 	// immediately clear the token cookie
 	http.SetCookie(w, &http.Cookie{
+		Path:    "/",
 		Name:    "token",
 		Value:   "",
 		Expires: time.Now(),
@@ -109,4 +111,22 @@ func (s *AuthService) Handlers(prefix string) http.Handler {
 	mux.HandleFunc(prefix+"/check", s.HandleCheck)
 	mux.HandleFunc(prefix+"/logout", s.Logout)
 	return mux
+}
+
+func (s *AuthService) Auth(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		c, err := r.Cookie("token")
+		if err != nil {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		_, err = s.Check(c.Value)
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		h.ServeHTTP(w, r)
+	})
 }
